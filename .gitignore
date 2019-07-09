@@ -1,0 +1,4 @@
+*.exe
+*.pub
+*.lock
+.idea/
