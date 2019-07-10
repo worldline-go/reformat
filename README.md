@@ -46,6 +46,7 @@ It supports the following types;
 	MapToSlice         []interface{}
 	ArrayToMap         map[string]interface{}
 	MapToArray         [1]interface{}
+	Maybe some other stuff who knows
 
 
 We also receive gorale.types (goracle.number) from the oracle driver package that will be supported if the "weak conversion" is switched on.
