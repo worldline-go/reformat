@@ -1,8 +1,6 @@
 
-
 [![pipeline status](https://gitlab.test.igdcs.com/finops/utils/basics/reformat/badges/master/pipeline.svg)](https://gitlab.test.igdcs.com/finops/utils/basics/reformat/commits/master)
 [![coverage report](https://gitlab.test.igdcs.com/finops/utils/basics/reformat/badges/master/coverage.svg)](https://gitlab.test.igdcs.com/finops/utils/basics/reformat/commits/master)
-
 ## Reformat 
 
 Package Reformat is a generic Golang package that exposes functionality to convert an arbitrary map[string]interface{} into a native Go structure.
