@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 )
-   
+
 type BasicPointer struct {
 	Vstring     *string
 	Vint        *int
@@ -1607,7 +1607,7 @@ func TestDecodeTable(t *testing.T) {
 			"struct with slice of struct property",
 			&SliceOfStruct{
 				Value: []Basic{
-					Basic{
+					{
 						Vstring: "vstring",
 						Vint:    2,
 						Vuint:   3,
@@ -1622,7 +1622,7 @@ func TestDecodeTable(t *testing.T) {
 			&map[string]interface{}{},
 			&map[string]interface{}{
 				"Value": []Basic{
-					Basic{
+					{
 						Vstring: "vstring",
 						Vint:    2,
 						Vuint:   3,
@@ -1796,8 +1796,6 @@ func TestDecodeMetadata(t *testing.T) {
 	}
 }
 
-
-
 func TestMetadata(t *testing.T) {
 	t.Parallel()
 
@@ -1962,7 +1960,6 @@ func TestWeakDBDecode(t *testing.T) {
 	}
 }
 
-
 func TestWeakDecodeMetadata(t *testing.T) {
 	t.Parallel()
 
@@ -2053,6 +2050,123 @@ func testArrayInput(t *testing.T, input map[string]interface{}, expected *Array)
 				"Vbar[%d] should be '%#v', got '%#v'",
 				i, expected.Vbar[i], v)
 		}
+	}
+}
+
+func TestDecode_BackupTagName(t *testing.T) {
+	type testStruct struct {
+		Field1  string `cfg:"field_1"`
+		NoSet   string `secret:"-"`
+		Nothing string
+	}
+
+	type args struct {
+		input     interface{}
+		output    interface{}
+		decodeMap bool
+		tag       string
+		backupTag string
+	}
+	tests := []struct {
+		name    string
+		args    args
+		wantErr bool
+		want    interface{}
+	}{
+		{
+			name: "test empty backup tag name",
+			args: args{
+				input: testStruct{
+					Field1:  "test field",
+					NoSet:   "don't see this",
+					Nothing: "nothing",
+				},
+				output: map[string]interface{}{
+					"Field1":  "test field",
+					"Nothing": "nothing",
+				},
+				tag:       "secret",
+				decodeMap: true,
+			},
+		},
+		{
+			name: "test to struct to map",
+			args: args{
+				input: testStruct{
+					Field1:  "test field",
+					NoSet:   "don't see this",
+					Nothing: "nothing",
+				},
+				output: map[string]interface{}{
+					"field_1": "test field",
+					"Nothing": "nothing",
+				},
+				tag:       "secret",
+				backupTag: "cfg",
+				decodeMap: true,
+			},
+		},
+		{
+			name: "test to map to struct",
+			args: args{
+				input: map[string]interface{}{
+					"field_1": "test field",
+					"nOtHinG": "nothing",
+				},
+				output: testStruct{
+					Field1:  "test field",
+					NoSet:   "",
+					Nothing: "nothing",
+				},
+				tag:       "secret",
+				backupTag: "cfg",
+				decodeMap: false,
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var outputMap map[string]interface{}
+			var outputStruct testStruct
+
+			cnf := &DecoderConfig{
+				DecodeHook:       nil,
+				ErrorUnused:      false,
+				ZeroFields:       false,
+				WeaklyTypedInput: true,
+				Metadata:         nil,
+				Result: func() interface{} {
+					if tt.args.decodeMap {
+						return &outputMap
+					} else {
+						return &outputStruct
+					}
+				}(),
+				TagName:       tt.args.tag,
+				BackupTagName: tt.args.backupTag,
+			}
+
+			decoder, err := NewDecoder(cnf)
+			if err != nil {
+				t.Fatalf("could not create new decoder: %v", err)
+			}
+
+			if err := decoder.Decode(tt.args.input); err != nil {
+				t.Fatalf("decode failed: %v", err)
+			}
+
+			compareVal := func() interface{} {
+				if tt.args.decodeMap {
+					return outputMap
+				} else {
+					return outputStruct
+				}
+			}()
+
+			if !reflect.DeepEqual(tt.args.output, compareVal) {
+				t.Fatalf("not equal want: %#v actual: %#v", tt.args.output, compareVal)
+			}
+		})
 	}
 }
 

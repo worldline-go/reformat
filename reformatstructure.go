@@ -79,9 +79,12 @@ type DecoderConfig struct {
 	// value.
 	Result interface{}
 
-	// The tag name that mapstructure reads for field names. This
-	// defaults to "mapstructure"
+	// TagName that mapstructure reads for field names. This
+	// defaults to "json"
 	TagName string
+
+	// BackupTagName usable if TagName not found.
+	BackupTagName string
 }
 
 // A Decoder takes a raw interface value and turns it into structured
@@ -106,8 +109,8 @@ type Metadata struct {
 }
 
 // Decode takes an input structure and uses reflection to translate it to
-// the output structure. output must be a pointer to a map or struct.
-func Decode(input interface{}, output interface{}) error {
+// the output structure. Output must be a pointer to a map or struct.
+func Decode(input, output interface{}) error {
 	config := &DecoderConfig{
 		Metadata: nil,
 		Result:   output,
@@ -138,7 +141,6 @@ func WeakDecode(input, output interface{}) error {
 	return decoder.Decode(input)
 }
 
-
 // WeakDBDecode is the same as Decode but is shorthand to enable
 // WeaklyTypedInput and it uses the "DB" tag for decoding. See DecoderConfig for more info.
 func WeakDBDecode(input, output interface{}) error {
@@ -146,7 +148,7 @@ func WeakDBDecode(input, output interface{}) error {
 		Metadata:         nil,
 		Result:           output,
 		WeaklyTypedInput: true,
-		TagName: "db",
+		TagName:          "db",
 	}
 	decoder, err := NewDecoder(config)
 	if err != nil {
@@ -157,7 +159,7 @@ func WeakDBDecode(input, output interface{}) error {
 
 // DecodeMetadata is the same as Decode, but is shorthand to
 // enable metadata collection. See DecoderConfig for more info.
-func DecodeMetadata(input interface{}, output interface{}, metadata *Metadata) error {
+func DecodeMetadata(input, output interface{}, metadata *Metadata) error {
 	config := &DecoderConfig{
 		Metadata: metadata,
 		Result:   output,
@@ -174,7 +176,7 @@ func DecodeMetadata(input interface{}, output interface{}, metadata *Metadata) e
 // WeakDecodeMetadata is the same as Decode, but is shorthand to
 // enable both WeaklyTypedInput and metadata collection. See
 // DecoderConfig for more info.
-func WeakDecodeMetadata(input interface{}, output interface{}, metadata *Metadata) error {
+func WeakDecodeMetadata(input, output interface{}, metadata *Metadata) error {
 	config := &DecoderConfig{
 		Metadata:         metadata,
 		Result:           output,
@@ -686,6 +688,9 @@ func (d *Decoder) decodeMapFromStruct(name string, dataVal reflect.Value, val re
 		}
 
 		tagValue := f.Tag.Get(d.config.TagName)
+		if tagValue == "" {
+			tagValue = f.Tag.Get(d.config.BackupTagName)
+		}
 		// split tagparts, get rid of stuff like omitempty and so on.
 		tagParts := strings.Split(tagValue, ",")
 
@@ -1039,7 +1044,13 @@ func (d *Decoder) decodeStructFromMap(name string, dataVal, val reflect.Value) e
 
 			// If "squash" is specified in the tag, we squash the field down.
 			squash := false
-			tagParts := strings.Split(fieldType.Tag.Get(d.config.TagName), ",")
+
+			tagValue := fieldType.Tag.Get(d.config.TagName)
+			if tagValue == "" {
+				tagValue = fieldType.Tag.Get(d.config.BackupTagName)
+			}
+
+			tagParts := strings.Split(tagValue, ",")
 			for _, tag := range tagParts[1:] {
 				if tag == "squash" {
 					squash = true
@@ -1068,6 +1079,10 @@ func (d *Decoder) decodeStructFromMap(name string, dataVal, val reflect.Value) e
 		fieldName := field.Name
 
 		tagValue := field.Tag.Get(d.config.TagName)
+		if tagValue == "" {
+			tagValue = field.Tag.Get(d.config.BackupTagName)
+		}
+
 		tagValue = strings.SplitN(tagValue, ",", 2)[0]
 		if tagValue != "" {
 			fieldName = tagValue
