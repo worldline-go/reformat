@@ -2170,6 +2170,131 @@ func TestDecode_BackupTagName(t *testing.T) {
 	}
 }
 
+func TestDecode_WeakDashUnderscore(t *testing.T) {
+	type testStruct struct {
+		Field1  string `secret:"field_1"`
+		Field2  string `secret:"field-2"`
+		NoSet   string `secret:"-"`
+		Nothing string
+	}
+
+	type args struct {
+		input     interface{}
+		output    interface{}
+		decodeMap bool
+		tag       string
+		weakDash  bool
+	}
+	tests := []struct {
+		name    string
+		args    args
+		wantErr bool
+		want    interface{}
+	}{
+		{
+			name: "test to struct to map",
+			args: args{
+				input: testStruct{
+					Field1:  "test field",
+					Field2:  "test field2",
+					NoSet:   "don't see this",
+					Nothing: "nothing",
+				},
+				output: map[string]interface{}{
+					"field_1": "test field",
+					"field-2": "test field2",
+					"Nothing": "nothing",
+				},
+				tag:       "secret",
+				decodeMap: true,
+				weakDash:  true,
+			},
+		},
+		{
+			name: "test to map to struct",
+			args: args{
+				input: map[string]interface{}{
+					"field-1": "test field",
+					"field-2": "test field2",
+					"nOtHinG": "nothing",
+				},
+				output: testStruct{
+					Field1:  "test field",
+					Field2:  "test field2",
+					NoSet:   "",
+					Nothing: "nothing",
+				},
+				tag:       "secret",
+				decodeMap: false,
+				weakDash:  true,
+			},
+		},
+		{
+			name: "test to map to struct without weak set",
+			args: args{
+				input: map[string]interface{}{
+					"field-1": "test field",
+					"field-2": "test field2",
+					"nOtHinG": "nothing",
+				},
+				output: testStruct{
+					Field1:  "",
+					Field2:  "test field2",
+					NoSet:   "",
+					Nothing: "nothing",
+				},
+				tag:       "secret",
+				decodeMap: false,
+				weakDash:  false,
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var outputMap map[string]interface{}
+			var outputStruct testStruct
+
+			cnf := &DecoderConfig{
+				DecodeHook:       nil,
+				ErrorUnused:      false,
+				ZeroFields:       false,
+				WeaklyTypedInput: true,
+				Metadata:         nil,
+				Result: func() interface{} {
+					if tt.args.decodeMap {
+						return &outputMap
+					} else {
+						return &outputStruct
+					}
+				}(),
+				TagName:              tt.args.tag,
+				WeaklyDashUnderscore: tt.args.weakDash,
+			}
+
+			decoder, err := NewDecoder(cnf)
+			if err != nil {
+				t.Fatalf("could not create new decoder: %v", err)
+			}
+
+			if err := decoder.Decode(tt.args.input); err != nil {
+				t.Fatalf("decode failed: %v", err)
+			}
+
+			compareVal := func() interface{} {
+				if tt.args.decodeMap {
+					return outputMap
+				} else {
+					return outputStruct
+				}
+			}()
+
+			if !reflect.DeepEqual(tt.args.output, compareVal) {
+				t.Fatalf("not equal want: %#v actual: %#v", tt.args.output, compareVal)
+			}
+		})
+	}
+}
+
 func stringPtr(v string) *string              { return &v }
 func intPtr(v int) *int                       { return &v }
 func uintPtr(v uint) *uint                    { return &v }

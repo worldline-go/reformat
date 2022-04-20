@@ -85,6 +85,10 @@ type DecoderConfig struct {
 
 	// BackupTagName usable if TagName not found.
 	BackupTagName string
+
+	// WeaklyDashUnderscore apply underscore/dash conversion to variables
+	// on map to struct.
+	WeaklyDashUnderscore bool
 }
 
 // A Decoder takes a raw interface value and turns it into structured
@@ -1098,6 +1102,11 @@ func (d *Decoder) decodeStructFromMap(name string, dataVal, val reflect.Value) e
 				if !ok {
 					// Not a string key
 					continue
+				}
+
+				if d.config.WeaklyDashUnderscore {
+					fieldName = strings.ReplaceAll(fieldName, "-", "_")
+					mK = strings.ReplaceAll(mK, "-", "_")
 				}
 
 				if strings.EqualFold(mK, fieldName) {
