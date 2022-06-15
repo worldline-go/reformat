@@ -1,3 +1,3 @@
-module gitlab.test.igdcs.com/finops/nextgen/utils/basics/reformat.git
+module github.com/worldline-go/reformat
 
-go 1.12
+go 1.18

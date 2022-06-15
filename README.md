@@ -1,6 +1,7 @@
 
 [![pipeline status](https://gitlab.test.igdcs.com/finops/utils/basics/reformat/badges/master/pipeline.svg)](https://gitlab.test.igdcs.com/finops/utils/basics/reformat/commits/master)
 [![coverage report](https://gitlab.test.igdcs.com/finops/utils/basics/reformat/badges/master/coverage.svg)](https://gitlab.test.igdcs.com/finops/utils/basics/reformat/commits/master)
+
 ## Reformat 
 
 Package Reformat is a generic Golang package that exposes functionality to convert an arbitrary map[string]interface{} into a native Go structure.
@@ -9,6 +10,11 @@ Package Reformat is a generic Golang package that exposes functionality to conve
 * Decode map[string]interface{} to a golang struct, regardless of key names.
 * Keep track of unused data. (Fields not mapped to the struct)
 * Custom interface{} can be registered in the config to handle custom conversions. See *test.go for details.
+
+## Inspired Projects
+
+[fatih/structs](https://github.com/fatih/structs)  
+[mitchellh/mapstructure](https://github.com/mitchellh/mapstructure)
 
 
 It supports the following types;
