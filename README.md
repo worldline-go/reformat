@@ -11,12 +11,6 @@ Package Reformat is a generic Golang package that exposes functionality to conve
 * Keep track of unused data. (Fields not mapped to the struct)
 * Custom interface{} can be registered in the config to handle custom conversions. See *test.go for details.
 
-## Inspired Projects
-
-[fatih/structs](https://github.com/fatih/structs)  
-[mitchellh/mapstructure](https://github.com/mitchellh/mapstructure)
-
-
 It supports the following types;
 
 	IntToFloat         float32
@@ -68,7 +62,7 @@ package main
 import (
 	"fmt"
 	"net/url"
-	"gitlab.test.igdcs.com/finops/utils/basics/reformat.git"
+	"github.com/worldline-go/reformat"
 )
 
 // settlementInputStruct
@@ -108,4 +102,10 @@ func parseForm() url.Values {
 	}
 }
 ```
+
+
+## Inspired Projects
+
+[fatih/structs](https://github.com/fatih/structs)  
+[mitchellh/mapstructure](https://github.com/mitchellh/mapstructure)
 
